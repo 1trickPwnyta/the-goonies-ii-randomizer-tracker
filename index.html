@@ -1,15 +1,399 @@
 <html>
 	<head>
-		<title>Goonies II Randomizer Tracker by 1trickPonyta</title>
+		<title>The Goonies II Randomizer Tracker by 1trickPonyta</title>
 		<style>
+			:root {
+				--available-location-color: green;
+				--unavailable-location-color: red;
+				--checked-location-color: gray;
+			}
+		
 			body {
-				background-image: map.png;
+				margin: 0;
+				user-select: none;
+			}
+		
+			#main {
+				position: relative;
+				background-image: url("background.png");
+				width: 1128px;
+				height: 768px;
+				overflow: hidden;
+				padding: 12px;
+			}
+			
+			#title {
+				position: absolute;
+				right: 0px;
+				background-image: url("title.gif");
+				background-repeat: no-repeat;
+				width: 502px;
+				height: 152px;
+			}
+			
+			.panel {
+				border: 4px solid white;
+			}
+			
+			#items {
+				background-image: url("items.png");
+				width: 240px;
+				height: 192px;
+				position: absolute;
+				left: 128px;
+				top: 64px;
+			}
+			
+			#items .item {
+				position: absolute;
+				width: 48px;
+				height: 48px;
+				cursor: hand;
+			}
+			
+			#items .item .counter {
+				position: absolute;
+				right: 2px;
+				bottom: 0px;
+				color: white;
+				text-shadow: 2px 2px black;
+				visibility: hidden;
+				font-family: monospace;
+				font-size: 24px;
+			}
+		
+			#map {
+				position: absolute;
+				background-image: url("map.png");
+				width: 1120px;
+				height: 400px;
+				bottom: 64px;
+			}
+		
+			#map .location {
+				position: absolute;
+				width: 12px;
+				height: 12px;
+				background: var(--unavailable-location-color);
+				border: 2px solid black;
+				cursor: hand;
+			}
+			
+			header {
+				padding: 8px;
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				background: rgba(255, 255, 255, 0.5);
+			}
+			
+			footer {
+				padding: 8px;
+				position: absolute;
+				bottom: 0px;
+				right: 0px;
+				background: rgba(255, 255, 255, 0.5);
 			}
 		</style>
+		<script>
+			var itemsCollected = ["yoyo", "shoes"];
+			
+			var locationMapping = new Array(2);
+			for (var k = 0; k < locationMapping.length; k++) {
+				locationMapping[k] = new Array(15);
+				for (var i = 0; i < locationMapping[k].length; i++) {
+					locationMapping[k][i] = new Array(11);
+					for (var j = 0; j < locationMapping[k][i].length; j++) {
+						locationMapping[k][i][j] = [];
+					}
+				}
+			}
+			
+			function toggleItem(itemName) {
+				if (itemsCollected.includes(itemName)) {
+					itemsCollected.splice(itemsCollected.indexOf(itemName), 1);
+				} else {
+					itemsCollected.push(itemName);
+				}
+			}
+			
+			function addItemButton(itemName, x, y, itemNameMultiple=[]) {
+				var itemButton = document.createElement("div");
+				itemButton.className = "item";
+				if (itemNameMultiple.length == 0) {
+					itemButton.itemName = [itemName];
+				} else {
+					itemButton.itemName = itemNameMultiple;
+				}
+				itemButton.title = itemName;
+				itemButton.style.left = x*48 + "px";
+				itemButton.style.top = y*48 + "px";
+				itemButton.itemIndex = 0;
+				itemButton.onclick = function() {
+					if (this.itemIndex < this.itemName.length) {
+						toggleItem(this.itemName[this.itemIndex++]);
+					} else {
+						for (var i = 0; i < this.itemName.length; i++) {
+							toggleItem(this.itemName[i]);
+						}
+						this.itemIndex = 0;
+					}
+					update();
+				};
+				if (itemNameMultiple.length > 0) {
+					var counter = document.createElement("div");
+					counter.className = "counter";
+					itemButton.counter = counter;
+					itemButton.appendChild(counter);
+				}
+				document.getElementById("items").appendChild(itemButton);
+			}
+			
+			function addLocation(front, x, y, reqs=null) {
+				var location = document.createElement("div");
+				location.className = "location";
+				location.title = getReqString(reqs);
+				var scaledx, scaledy;
+				switch (locationMapping[front? 0: 1][x][y].length) {
+					case 0:
+						scaledx = x*35 + 27;
+						scaledy = y*35 + 9;
+						break;
+					case 1:
+						scaledx = x*35 + 27;
+						scaledy = y*35 + 27;
+						break;
+					case 2:
+						scaledx = x*35 + 9;
+						scaledy = y*35 + 27;
+						break;
+					default:
+						scaledx = x*35 + 9;
+						scaledy = y*35 + 9;
+						break;
+				}
+				if (!front) {
+					scaledx += 15*35 + 51;
+				}
+				location.style.left = scaledx + "px";
+				location.style.top = scaledy + "px";
+				location.reqs = reqs;
+				location.checked = false;
+				location.onclick = function() {
+					this.checked = !this.checked;
+					update();
+				};
+				document.getElementById("map").appendChild(location);
+				locationMapping[front? 0: 1][x][y].push(location);
+				return location;
+			}
+			
+			function update() {
+				var itemBoxes = document.getElementsByClassName("item");
+				for (var i = 0; i < itemBoxes.length; i++) {
+					var numberItems = 0;
+					for (var j = 0; j < itemBoxes[i].itemName.length; j++) {
+						if (itemsCollected.includes(itemBoxes[i].itemName[j])) {
+							numberItems++;
+						}
+					}
+					itemBoxes[i].style.background = numberItems > 0? "rgba(0, 0, 0, 0)": "rgba(0, 0, 0, 0.8)";
+					if (itemBoxes[i].itemName.length > 1) {
+						if (numberItems == 0) {
+							itemBoxes[i].counter.style.visibility = "hidden";
+						} else {
+							itemBoxes[i].counter.innerHTML = numberItems;
+							itemBoxes[i].counter.style.visibility = "visible";
+						}
+					}
+				}
+				
+				var locations = document.getElementsByClassName("location");
+				for (var i = 0; i < locations.length; i++) {
+					if (locations[i].checked) {
+						locations[i].style.background = "var(--checked-location-color)";
+					} else {
+						locations[i].style.background = 
+								checkRequirements(locations[i].reqs)? 
+										"var(--available-location-color)": 
+										"var(--unavailable-location-color)";
+					}
+				}
+			}
+			
+			/**
+				Syntax for requirements:
+				string = a single item requirement
+				array of strings = multiple item requirements, all must be met
+				array of arrays = multiple item requirements, any can be met
+				array of mixed arrays and strings = multiple item requirements, all must be met
+				
+				Examples:
+				"item1" = item1
+				["item1", "item2"] = item1 and item2
+				["item1", ["item2", "item3"]] = item1 and (item2 and item3)
+				["item1", [["item2"], ["item3"]] = item1 and ((item2) or (item3))
+				[["item1"], ["item2"]] = (item1) or (item2)
+				[["item1"], ["item2", "item3"]] = (item1) or (item2 and item3)
+			**/
+			function checkRequirements(reqs) {
+				if (reqs == null) {
+					return true;
+				} else if (Array.isArray(reqs)) {
+					var reqsmet;
+					var allArrays = true;	// Determines whether to use and logic or or logic
+					for (var i = 0; i < reqs.length; i++) {
+						if (!Array.isArray(reqs[i])) {
+							allArrays = false;
+						}
+					}
+					if (allArrays) {	// or logic
+						reqsmet = false;
+						for (var i = 0; i < reqs.length; i++) {
+							if (checkRequirements(reqs[i])) {
+								reqsmet = true;
+							}
+						}
+					} else {	// and logic
+						reqsmet = true;
+						for (var i = 0; i < reqs.length; i++) {
+							if (!checkRequirements(reqs[i])) {
+								reqsmet = false;
+							}
+						}
+					}
+					return reqsmet;
+				} else {
+					return itemsCollected.includes(reqs);
+				}
+			}
+			
+			function getReqString(reqs, reqstring="") {
+				reqstring = _getReqStringHelper(reqs, reqstring);
+				if (reqstring.charAt(0) == "(") {
+					reqstring = reqstring.substr(1);
+				}
+				if (reqstring.charAt(reqstring.length - 1) == ")") {
+					reqstring = reqstring.substr(0, reqstring.length - 1);
+				}
+				return reqstring;
+			}
+			
+			function _getReqStringHelper(reqs, reqstring="") {
+				if (reqs == null) {
+					return "no requirements";
+				} else if (Array.isArray(reqs)) {
+					var allArrays = true;	// Determines whether to use and logic or or logic
+					for (var i = 0; i < reqs.length; i++) {
+						if (!Array.isArray(reqs[i])) {
+							allArrays = false;
+						}
+					}
+					if (reqs.length > 1) {
+						reqstring += "(";
+					}
+					if (allArrays) {	// or logic
+						for (var i = 0; i < reqs.length - 1; i++) {
+							reqstring += _getReqStringHelper(reqs[i]) + " or ";
+						}
+					} else {	// and logic
+						for (var i = 0; i < reqs.length - 1; i++) {
+							reqstring += _getReqStringHelper(reqs[i]) + " and ";
+						}
+					}
+					reqstring += _getReqStringHelper(reqs[reqs.length - 1]);
+					if (reqs.length > 1) {
+						reqstring += ")";
+					}
+					return reqstring;
+				} else {
+					return reqs;
+				}
+			}
+			
+			window.onload = function() {
+				addItemButton("yoyo", 0, 0);
+				addItemButton("slingshot", 1, 0);
+				addItemButton("boomerang", 2, 0);
+				addItemButton("bombox", 3, 0, ["bombox", "bomb2", "bomb3", "bomb4"]);
+				addItemButton("firebox", 4, 0, ["firebox", "fire1", "fire2", "fire3"]);
+				addItemButton("diving suit", 0, 1);
+				addItemButton("transceiver", 1, 1);
+				addItemButton("glasses", 2, 1);
+				addItemButton("keyholder", 3, 1, ["keyholder", "key 2", "key 3", "key 4"]);
+				addItemButton("ladder", 4, 1);
+				addItemButton("hammer", 0, 2);
+				addItemButton("helmet", 1, 2);
+				addItemButton("raincoat", 2, 2);
+				addItemButton("bulletproof vest", 3, 2);
+				addItemButton("candle", 4, 2);
+				addItemButton("goonies", 0, 3, ["goonie 1", "goonie 2", "goonie 3", "goonie 4", "goonie 5", "goonie 6"]);
+				addItemButton("shoes", 2, 3);
+				addItemButton("hyper shoes", 3, 3);
+				addItemButton("jump shoes", 4, 3);
+				
+				addLocation(true, 1, 2);	// 1- hammer
+				addLocation(true, 2, 2);	// 2- keyholder
+				addLocation(true, 2, 2, "keyholder");	// 2- clue
+				addLocation(true, 2, 3);	// 3- magic locater
+				addLocation(true, 0, 3);	// 4- slingshot
+				addLocation(false, 3, 4);	// 5- firebox
+				addLocation(false, 3, 4, "keyholder");	// 5- clue
+				addLocation(false, 3, 1);	// 6- bombox
+				addLocation(false, 3, 1, ["keyholder", "hammer"]);	// 6- goonie
+				addLocation(true, 3, 5);	// 8- candle
+				addLocation(true, 3, 5);	// 8- transceiver
+				addLocation(true, 1, 5);	// 9- keyholder
+				addLocation(true, 1, 5);	// 9- magic locater
+				addLocation(true, 2, 7, ["keyholder", "hammer"]);	// 11- glasses
+				addLocation(true, 2, 7);	// 11- boomerang
+				addLocation(false, 0, 5, "glasses");	// 12- helmet
+				addLocation(true, 5, 6, "keyholder");	// 14- clue
+				addLocation(true, 5, 6, ["keyholder", "hammer"]);	// 14- goonie
+				addLocation(true, 7, 4, "bombox");	// 17- hyper shoes
+				addLocation(true, 12, 6);	// 18- magic locator
+				addLocation(false, 12, 5, "hammer");	// 22- firebox
+				addLocation(false, 11, 6, ["glasses", "hammer", "keyholder"]);	// 23- diving suit
+				addLocation(false, 11, 6, ["keyholder", "hammer"]);	// 23- clue
+				addLocation(false, 12, 7, ["keyholder", "hammer"]);	// 24- clue
+				addLocation(false, 12, 7, "hammer");	// 24- bombox
+				addLocation(false, 10, 7, ["hammer", "keyholder"]);	// 25- raincoat
+				addLocation(false, 11, 4, "hammer");	// 26- keyholder
+				addLocation(false, 8, 4, ["keyholder", "hammer"]);	// 27- clue
+				addLocation(false, 8, 4, ["keyholder", "hammer"]);	// 27- clue
+				addLocation(false, 8, 4, ["keyholder", "hammer", "glasses"]);	// 27- goonie
+				addLocation(false, 0, 8, "diving suit");	// 29- ladder
+				addLocation(false, 0, 8, "diving suit");	// 29- bombox
+				addLocation(false, 0, 8, ["keyholder", "diving suit", "ladder"]);	// 29- goonie
+				addLocation(true, 3, 7, "diving suit");	// 30- keyholder
+				addLocation(true, 3, 7, "diving suit");	// 30- magic locator
+				addLocation(true, 2, 8, "diving suit");	// 31- jump shoes
+				addLocation(true, 7, 7, ["keyholder", "diving suit"]);	// 32- clue
+				addLocation(true, 14, 4, [["ladder"], ["jump shoes", "glasses"]]);	// 33- bombox
+				addLocation(true, 12, 2, [["ladder"], ["jump shoes", "glasses"]]);	// 34- magic locator
+				addLocation(false, 9, 3, ["glasses", "ladder", "hammer"]);	// 37- firebox
+				addLocation(true, 12, 0, ["hammer", "ladder", "glasses", "keyholder"]);	// 39- bulletproof vest
+				addLocation(false, 5, 7, ["keyholder", "diving suit", "hammer", "ladder"]);	// 41- goonie
+				addLocation(true, 13, 10, ["keyholder", "hammer", "ladder"]);	// 43- goonie
+				addLocation(true, 3, 1, ["keyholder", "ladder"]);	// 46- clue
+				addLocation(false, 4, 2, ["ladder", "hammer"]);	// 49- firebox
+				addLocation(true, 7, 9, ["hammer", "ladder", "diving suit", "keyholder", "goonie 6"]);	// annie
+				update();
+			};
+		</script>
 	</head>
 	<body>
-		<footer>
-			Base map image by jeffisdancing (<a href="https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332">https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332</a>).
-		</footer>
+		<div id="main">
+			<header>
+				The Goonies II Randomizer Tracker by 1trickPonyta<br />
+				Version 1.0
+			</header>
+			<div id="title"></div>
+			<div id="items" class="panel"></div>
+			<div id="map" class="panel"></div>
+			<footer>
+				Base map image by jeffisdancing (<a href="https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332">https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332</a>).
+			</footer>
+		</div>
 	</body>
 </html>
