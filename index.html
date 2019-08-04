@@ -112,6 +112,13 @@
 		</style>
 		<script>
 			var itemsCollected = ["yoyo", "shoes"];
+			var tags = new Array(2);
+			for (var i = 0; i < tags.length; i++) {
+				tags[i] = new Array(15);
+				for (var j = 0; j < tags[i].length; j++) {
+					tags[i][j] = new Array(11);
+				}
+			}
 			
 			var locationMapping = new Array(2);
 			for (var k = 0; k < locationMapping.length; k++) {
@@ -119,7 +126,7 @@
 				for (var i = 0; i < locationMapping[k].length; i++) {
 					locationMapping[k][i] = new Array(11);
 					for (var j = 0; j < locationMapping[k][i].length; j++) {
-						locationMapping[k][i][j] = [];
+						locationMapping[k][i][j] = {};
 					}
 				}
 			}
@@ -165,12 +172,13 @@
 				return itemButton;
 			}
 			
-			function addLocation(front, x, y, reqs=null) {
+			function addLocation(name, front, x, y, reqs=null) {
 				var location = document.createElement("div");
 				location.className = "location";
 				location.title = getReqString(reqs);
 				var scaledx, scaledy;
-				switch (locationMapping[front? 0: 1][x][y].length) {
+				switch (Object.keys(locationMapping[front? 0: 1][x][y])? 
+						Object.keys(locationMapping[front? 0: 1][x][y]).length: 0) {
 					case 0:
 						scaledx = x*35 + 27;
 						scaledy = y*35 + 9;
@@ -200,12 +208,15 @@
 					update();
 				};
 				document.getElementById("map").appendChild(location);
-				locationMapping[front? 0: 1][x][y].push(location);
+				locationMapping[front? 0: 1][x][y][name] = location;
 				return location;
 			}
 			
 			function addTag(front, x, y) {
 				var tag = document.createElement("div");
+				tag.front = front;
+				tag.x = x;
+				tag.y = y;
 				tag.className = "tag";
 				var scaledx = x*35 + 8;
 				var scaledy = y*35 + 8;
@@ -226,6 +237,7 @@
 					update();
 				};
 				document.getElementById("map").appendChild(tag);
+				tags[front? 0: 1][x][y] = tag;
 				return tag;
 			}
 			
@@ -264,6 +276,83 @@
 				var tags = document.getElementsByClassName("tag");
 				for (var i = 0; i < tags.length; i++) {
 					tags[i].style.background = tags[i].title? "var(--tag-color)": "var(--notag-color)";
+				}
+				
+				save();
+			}
+			
+			function save() {
+				localStorage.setItem("itemsCollected", JSON.stringify(itemsCollected));
+				
+				var savedTags = [];
+				for (var i = 0; i < tags.length; i++) {
+					savedTags[i] = [];
+					for (var j = 0; j < tags[i].length; j++) {
+						savedTags[i][j] = [];
+						for (var k = 0; k < tags[i][j].length; k++) {
+							if (tags[i][j][k]) {
+								savedTags[i][j][k] = tags[i][j][k].title;
+							}
+						}
+					}
+				}
+				localStorage.setItem("tags", JSON.stringify(savedTags));
+				
+				var savedLocations = [];
+				for (var i = 0; i < locationMapping.length; i++) {
+					savedLocations[i] = [];
+					for (var j = 0; j < locationMapping[i].length; j++) {
+						savedLocations[i][j] = [];
+						for (var k = 0; k < locationMapping[i][j].length; k++) {
+							if (Object.keys(locationMapping[i][j][k])) {
+								savedLocations[i][j][k] = {};
+								for (var l = 0; l < Object.keys(locationMapping[i][j][k]).length; l++) {
+									savedLocations[i][j][k][Object.keys(locationMapping[i][j][k])[l]] = 
+											locationMapping[i][j][k][Object.keys(locationMapping[i][j][k])[l]].checked;
+								}
+							}
+						}
+					}
+				}
+				localStorage.setItem("locations", JSON.stringify(savedLocations));
+			}
+			
+			function load() {
+				itemsCollected = JSON.parse(localStorage.getItem("itemsCollected"));
+				var items = document.getElementsByClassName("item");
+				for (var i = 0; i < items.length; i++) {
+					for (var j = 0; j < items[i].itemName.length; j++) {
+						if (itemsCollected.includes(items[i].itemName[j])) {
+							items[i].itemIndex = j + 1;
+						}
+					}
+				}
+				
+				var savedTags = JSON.parse(localStorage.getItem("tags"));
+				for (var i = 0; i < tags.length; i++) {
+					for (var j = 0; j < tags[i].length; j++) {
+						for (var k = 0; k < tags[i][j].length; k++) {
+							if (tags[i][j][k]) {
+								tags[i][j][k].title = savedTags[i][j][k];
+							}
+						}
+					}
+				}
+				
+				var savedLocations = JSON.parse(localStorage.getItem("locations"));
+				for (var i = 0; i < locationMapping.length; i++) {
+					for (var j = 0; j < locationMapping[i].length; j++) {
+						for (var k = 0; k < locationMapping[i][j].length; k++) {
+							if (locationMapping[i][j][k]) {
+								for (var l = 0; l < Object.keys(savedLocations[i][j][k]).length; l++) {
+									if (locationMapping[i][j][k][Object.keys(savedLocations[i][j][k])[l]]) {
+										locationMapping[i][j][k][Object.keys(savedLocations[i][j][k])[l]].checked = 
+												savedLocations[i][j][k][Object.keys(savedLocations[i][j][k])[l]];
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 			
@@ -529,47 +618,50 @@
 				addTag(false, 5, 8);
 				addTag(false, 6, 8);
 				
-				addLocation(true, 1, 2);	// 1- hammer
-				addLocation(true, 2, 2);	// 2- keyholder
-				addLocation(true, 2, 2, "keyholder");	// 2- clue
-				addLocation(true, 2, 3);	// 3- magic locater
-				addLocation(true, 0, 3);	// 4- slingshot
-				addLocation(false, 3, 4);	// 5- firebox
-				addLocation(false, 3, 4, "keyholder");	// 5- clue
-				addLocation(false, 3, 1);	// 6- bombox
-				addLocation(true, 3, 5);	// 8- candle
-				addLocation(true, 3, 5);	// 8- transceiver
-				addLocation(true, 1, 5);	// 9- keyholder
-				addLocation(true, 1, 5);	// 9- magic locater
-				addLocation(true, 2, 7, ["keyholder", "hammer"]);	// 11- glasses
-				addLocation(true, 2, 7);	// 11- boomerang
-				addLocation(false, 0, 5, "glasses");	// 12- helmet
-				addLocation(true, 5, 6, "keyholder");	// 14- clue
-				addLocation(true, 7, 4, "bombox");	// 17- hyper shoes
-				addLocation(true, 12, 6);	// 18- magic locator
-				addLocation(false, 12, 5, "hammer");	// 22- firebox
-				addLocation(false, 11, 6, ["glasses", "hammer", "keyholder"]);	// 23- diving suit
-				addLocation(false, 11, 6, ["keyholder", "hammer"]);	// 23- clue
-				addLocation(false, 12, 7, ["keyholder", "hammer"]);	// 24- clue
-				addLocation(false, 12, 7, "hammer");	// 24- bombox
-				addLocation(false, 10, 7, ["hammer", "keyholder"]);	// 25- raincoat
-				addLocation(false, 11, 4, "hammer");	// 26- keyholder
-				addLocation(false, 8, 4, ["keyholder", "hammer"]);	// 27- clue
-				addLocation(false, 8, 4, ["keyholder", "hammer"]);	// 27- clue
-				addLocation(false, 0, 8, "diving suit");	// 29- ladder
-				addLocation(false, 0, 8, "diving suit");	// 29- bombox
-				addLocation(true, 3, 7, "diving suit");	// 30- keyholder
-				addLocation(true, 3, 7, "diving suit");	// 30- magic locator
-				addLocation(true, 2, 8, "diving suit");	// 31- jump shoes
-				addLocation(true, 7, 7, ["keyholder", "diving suit"]);	// 32- clue
-				addLocation(true, 14, 4, [["ladder"], ["jump shoes", "glasses"]]);	// 33- bombox
-				addLocation(true, 12, 2, [["ladder"], ["jump shoes", "glasses"]]);	// 34- magic locator
-				addLocation(false, 9, 3, ["glasses", "ladder", "hammer"]);	// 37- firebox
-				addLocation(true, 12, 0, ["hammer", "ladder", "glasses", "keyholder"]);	// 39- bulletproof vest
-				addLocation(true, 3, 1, ["keyholder", "ladder"]);	// 46- clue
-				addLocation(false, 4, 2, ["ladder", "hammer", "glasses"]);	// 49- firebox
-				addLocation(true, 7, 9, ["hammer", "ladder", "diving suit", "keyholder", "goonie 6"]);	// annie
+				addLocation("1- hammer", true, 1, 2);	
+				addLocation("2- keyholder", true, 2, 2);	
+				addLocation("2- clue", true, 2, 2, "keyholder");	
+				addLocation("3- magic locater", true, 2, 3);	
+				addLocation("4- slingshot", true, 0, 3);	
+				addLocation("5- firebox", false, 3, 4);	
+				addLocation("5- clue", false, 3, 4, "keyholder");	
+				addLocation("6- bombox", false, 3, 1);	
+				addLocation("8- candle", true, 3, 5);	
+				addLocation("8- transceiver", true, 3, 5);	
+				addLocation("9- keyholder", true, 1, 5);	
+				addLocation("9- magic locater", true, 1, 5);	
+				addLocation("11- glasses", true, 2, 7, ["keyholder", "hammer"]);	
+				addLocation("11- boomerang", true, 2, 7);	
+				addLocation("12- helmet", false, 0, 5, "glasses");	
+				addLocation("14- clue", true, 5, 6, "keyholder");	
+				addLocation("17- hyper shoes", true, 7, 4, "bombox");	
+				addLocation("18- magic locator", true, 12, 6);	
+				addLocation("22- firebox", false, 12, 5, "hammer");	
+				addLocation("23- diving suit", false, 11, 6, ["glasses", "hammer", "keyholder"]);	
+				addLocation("23- clue", false, 11, 6, ["keyholder", "hammer"]);	
+				addLocation("24- clue", false, 12, 7, ["keyholder", "hammer"]);	
+				addLocation("24- bombox", false, 12, 7, "hammer");	
+				addLocation("25- raincoat", false, 10, 7, ["hammer", "keyholder"]);	
+				addLocation("26- keyholder", false, 11, 4, "hammer");	
+				addLocation("27- clue", false, 8, 4, ["keyholder", "hammer"]);	
+				addLocation("27- clue", false, 8, 4, ["keyholder", "hammer"]);	
+				addLocation("29- ladder", false, 0, 8, "diving suit");	
+				addLocation("29- bombox", false, 0, 8, "diving suit");	
+				addLocation("30- keyholder", true, 3, 7, "diving suit");	
+				addLocation("30- magic locator", true, 3, 7, "diving suit");	
+				addLocation("31- jump shoes", true, 2, 8, "diving suit");	
+				addLocation("32- clue", true, 7, 7, ["keyholder", "diving suit"]);	
+				addLocation("33- bombox", true, 14, 4, [["ladder"], ["jump shoes", "glasses"]]);	
+				addLocation("34- magic locator", true, 12, 2, [["ladder"], ["jump shoes", "glasses"]]);	
+				addLocation("37- firebox", false, 9, 3, ["glasses", "ladder", "hammer"]);	
+				addLocation("39- bulletproof vest", true, 12, 0, ["hammer", "ladder", "glasses", "keyholder"]);	
+				addLocation("46- clue", true, 3, 1, ["keyholder", "ladder"]);	
+				addLocation("49- firebox", false, 4, 2, ["ladder", "hammer", "glasses"]);	
+				addLocation("54- annie", true, 7, 9, ["hammer", "ladder", "diving suit", "keyholder", "goonie 6"]);	
 				
+				if (localStorage.getItem("itemsCollected")) {
+					load();
+				}
 				update();
 			};
 		</script>
@@ -578,7 +670,7 @@
 		<div id="main">
 			<header>
 				The Goonies II Randomizer Tracker by 1trickPonyta<br />
-				Version 1.2
+				Version 1.3
 			</header>
 			<div id="title"></div>
 			<div id="items" class="panel"></div>
