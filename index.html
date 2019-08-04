@@ -6,6 +6,8 @@
 				--available-location-color: green;
 				--unavailable-location-color: red;
 				--checked-location-color: gray;
+				--notag-color: rgba(0, 0, 255, 0);
+				--tag-color: rgba(0, 0, 255, 0.2);
 			}
 		
 			body {
@@ -68,6 +70,19 @@
 				width: 1120px;
 				height: 400px;
 				bottom: 64px;
+			}
+			
+			#map #hint {
+				position: absolute;
+				bottom: 0px;
+				padding: 4px;
+			}
+			
+			#map .tag {
+				position: absolute;
+				background: var(--notag-color);
+				width: 35px;
+				height: 35px;
 			}
 		
 			#map .location {
@@ -147,6 +162,7 @@
 					itemButton.appendChild(counter);
 				}
 				document.getElementById("items").appendChild(itemButton);
+				return itemButton;
 			}
 			
 			function addLocation(front, x, y, reqs=null) {
@@ -188,6 +204,31 @@
 				return location;
 			}
 			
+			function addTag(front, x, y) {
+				var tag = document.createElement("div");
+				tag.className = "tag";
+				var scaledx = x*35 + 8;
+				var scaledy = y*35 + 8;
+				if (!front) {
+					scaledx += 15*35 + 51;
+				}
+				tag.style.left = scaledx + "px";
+				tag.style.top = scaledy + "px";
+				tag.onclick = function() {
+					if (!this.title) {
+						var tag = prompt("Add a note", "Goonie location");
+						if (tag) {
+							this.title = tag;
+						}
+					} else {
+						this.title = "";
+					}
+					update();
+				};
+				document.getElementById("map").appendChild(tag);
+				return tag;
+			}
+			
 			function update() {
 				var itemBoxes = document.getElementsByClassName("item");
 				for (var i = 0; i < itemBoxes.length; i++) {
@@ -218,6 +259,11 @@
 										"var(--available-location-color)": 
 										"var(--unavailable-location-color)";
 					}
+				}
+				
+				var tags = document.getElementsByClassName("tag");
+				for (var i = 0; i < tags.length; i++) {
+					tags[i].style.background = tags[i].title? "var(--tag-color)": "var(--notag-color)";
 				}
 			}
 			
@@ -332,6 +378,157 @@
 				addItemButton("hyper shoes", 3, 3);
 				addItemButton("jump shoes", 4, 3);
 				
+				addTag(true, 0, 0);
+				addTag(true, 1, 0);
+				addTag(true, 2, 0);
+				addTag(true, 12, 0);
+				addTag(true, 13, 0);
+				addTag(true, 14, 0);
+				addTag(true, 1, 1);
+				addTag(true, 2, 1);
+				addTag(true, 3, 1);
+				addTag(true, 12, 1);
+				addTag(true, 13, 1);
+				addTag(true, 14, 1);
+				addTag(true, 0, 2);
+				addTag(true, 1, 2);
+				addTag(true, 2, 2);
+				addTag(true, 3, 2);
+				addTag(true, 6, 2);
+				addTag(true, 7, 2);
+				addTag(true, 11, 2);
+				addTag(true, 12, 2);
+				addTag(true, 13, 2);
+				addTag(true, 14, 2);
+				addTag(true, 0, 3);
+				addTag(true, 1, 3);
+				addTag(true, 2, 3);
+				addTag(true, 3, 3);
+				addTag(true, 4, 3);
+				addTag(true, 5, 3);
+				addTag(true, 6, 3);
+				addTag(true, 11, 3);
+				addTag(true, 12, 3);
+				addTag(true, 13, 3);
+				addTag(true, 2, 4);
+				addTag(true, 3, 4);
+				addTag(true, 4, 4);
+				addTag(true, 5, 4);
+				addTag(true, 7, 4);
+				addTag(true, 8, 4);
+				addTag(true, 9, 4);
+				addTag(true, 10, 4);
+				addTag(true, 11, 4);
+				addTag(true, 12, 4);
+				addTag(true, 13, 4);
+				addTag(true, 14, 4);
+				addTag(true, 1, 5);
+				addTag(true, 2, 5);
+				addTag(true, 3, 5);
+				addTag(true, 5, 5);
+				addTag(true, 6, 5);
+				addTag(true, 7, 5);
+				addTag(true, 12, 5);
+				addTag(true, 13, 5);
+				addTag(true, 14, 5);
+				addTag(true, 0, 6);
+				addTag(true, 1, 6);
+				addTag(true, 2, 6);
+				addTag(true, 3, 6);
+				addTag(true, 5, 6);
+				addTag(true, 6, 6);
+				addTag(true, 7, 6);
+				addTag(true, 12, 6);
+				addTag(true, 13, 6);
+				addTag(true, 14, 6);
+				addTag(true, 0, 7);
+				addTag(true, 1, 7);
+				addTag(true, 2, 7);
+				addTag(true, 3, 7);
+				addTag(true, 4, 7);
+				addTag(true, 5, 7);
+				addTag(true, 6, 7);
+				addTag(true, 7, 7);
+				addTag(true, 14, 7);
+				addTag(true, 2, 8);
+				addTag(true, 3, 8);
+				addTag(true, 6, 8);
+				addTag(true, 7, 8);
+				addTag(true, 14, 8);
+				addTag(true, 6, 9);
+				addTag(true, 7, 9);
+				addTag(true, 11, 9);
+				addTag(true, 12, 9);
+				addTag(true, 14, 9);
+				addTag(true, 11, 10);
+				addTag(true, 12, 10);
+				addTag(true, 13, 10);
+				addTag(true, 14, 10);
+				addTag(false, 2, 1);
+				addTag(false, 3, 1);
+				addTag(false, 9, 1);
+				addTag(false, 10, 1);
+				addTag(false, 11, 1);
+				addTag(false, 0, 2);
+				addTag(false, 1, 2);
+				addTag(false, 2, 2);
+				addTag(false, 3, 2);
+				addTag(false, 4, 2);
+				addTag(false, 5, 2);
+				addTag(false, 6, 2);
+				addTag(false, 7, 2);
+				addTag(false, 10, 2);
+				addTag(false, 11, 2);
+				addTag(false, 12, 2);
+				addTag(false, 13, 2);
+				addTag(false, 1, 3);
+				addTag(false, 2, 3);
+				addTag(false, 9, 3);
+				addTag(false, 10, 3);
+				addTag(false, 11, 3);
+				addTag(false, 12, 3);
+				addTag(false, 13, 3);
+				addTag(false, 14, 3);
+				addTag(false, 2, 4);
+				addTag(false, 3, 4);
+				addTag(false, 4, 4);
+				addTag(false, 8, 4);
+				addTag(false, 9, 4);
+				addTag(false, 10, 4);
+				addTag(false, 11, 4);
+				addTag(false, 12, 4);
+				addTag(false, 0, 5);
+				addTag(false, 1, 5);
+				addTag(false, 2, 5);
+				addTag(false, 3, 5);
+				addTag(false, 4, 5);
+				addTag(false, 5, 5);
+				addTag(false, 10, 5);
+				addTag(false, 11, 5);
+				addTag(false, 12, 5);
+				addTag(false, 13, 5);
+				addTag(false, 14, 5);
+				addTag(false, 1, 6);
+				addTag(false, 2, 6);
+				addTag(false, 3, 6);
+				addTag(false, 4, 6);
+				addTag(false, 5, 6);
+				addTag(false, 6, 6);
+				addTag(false, 11, 6);
+				addTag(false, 12, 6);
+				addTag(false, 0, 7);
+				addTag(false, 1, 7);
+				addTag(false, 2, 7);
+				addTag(false, 3, 7);
+				addTag(false, 5, 7);
+				addTag(false, 10, 7);
+				addTag(false, 11, 7);
+				addTag(false, 12, 7);
+				addTag(false, 0, 8);
+				addTag(false, 1, 8);
+				addTag(false, 5, 8);
+				addTag(false, 6, 8);
+				
 				addLocation(true, 1, 2);	// 1- hammer
 				addLocation(true, 2, 2);	// 2- keyholder
 				addLocation(true, 2, 2, "keyholder");	// 2- clue
@@ -372,6 +569,7 @@
 				addLocation(true, 3, 1, ["keyholder", "ladder"]);	// 46- clue
 				addLocation(false, 4, 2, ["ladder", "hammer", "glasses"]);	// 49- firebox
 				addLocation(true, 7, 9, ["hammer", "ladder", "diving suit", "keyholder", "goonie 6"]);	// annie
+				
 				update();
 			};
 		</script>
@@ -380,11 +578,15 @@
 		<div id="main">
 			<header>
 				The Goonies II Randomizer Tracker by 1trickPonyta<br />
-				Version 1.1
+				Version 1.2
 			</header>
 			<div id="title"></div>
 			<div id="items" class="panel"></div>
-			<div id="map" class="panel"></div>
+			<div id="map" class="panel">
+				<div id="hint">
+					Hint: Click on a white map tile to add a note.
+				</div>
+			</div>
 			<footer>
 				Base map image by jeffisdancing (<a href="https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332">https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332</a>).
 			</footer>
