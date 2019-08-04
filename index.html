@@ -109,6 +109,21 @@
 				right: 0px;
 				background: rgba(255, 255, 255, 0.5);
 			}
+			
+			#controls {
+				position: absolute;
+				bottom: 0px;
+				padding: 8px;
+			}
+			
+			#controls input[type="button"] {
+				padding: 8px 16px;
+				background: rgb(252, 152, 56);
+				color: white;
+				cursor: hand;
+				border: 0;
+				font-size: 16px;
+			}
 		</style>
 		<script>
 			var itemsCollected = ["yoyo", "shoes"];
@@ -353,6 +368,15 @@
 							}
 						}
 					}
+				}
+			}
+			
+			function reset() {
+				if (confirm("You sure about that?")) {
+					localStorage.removeItem("itemsCollected");
+					localStorage.removeItem("tags");
+					localStorage.removeItem("locations");
+					location.reload();
 				}
 			}
 			
@@ -678,6 +702,9 @@
 				<div id="hint">
 					Hint: Click on a white map tile to add a note.
 				</div>
+			</div>
+			<div id="controls">
+				<input type="button" value="Reset" onclick="reset()" />
 			</div>
 			<footer>
 				Base map image by jeffisdancing (<a href="https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332">https://gamefaqs.gamespot.com/nes/563420-the-goonies-ii/faqs/58332</a>).
